@@ -1,0 +1,14 @@
+imagesIds = loadstyles();
+
+% Semplice split
+
+numImages = size(imagesIds,1);
+valSize = 0.25;
+
+trainIndexes = randperm(numImages, floor((1 - valSize)*numImages));
+valIndexes = setdiff(1:numImages,trainIndexes);
+
+trainIds = imagesIds(trainIndexes);
+valIds = imagesIds(valIndexes);
+
+save('train_val_ids.mat','trainIds','valIds');
