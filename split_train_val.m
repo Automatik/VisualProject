@@ -13,16 +13,25 @@ subCategory(idxs.',:) = [];
 % masterCategory(idxs.',:) = [];
 % subCategory(idxs.',:) = [];
 
+% Rimuoviamo l'immagine relativa al label Home che è solo una
+pos = find(strcmp(masterCategory,'Home'));
+imagesIds(pos,:) = [];
+masterCategory(pos,:) = [];
+subCategory(pos,:) = [];
+
 % Create ImageDatastore
 location = cellstr(strcat('../images/',num2str(imagesIds),'.jpg'));
 location = strrep(location,' ',''); %remove spaces
-imdsMaster = imageDatastore(location, 'Labels', masterCategory);
-imdsSub = imageDatastore(location, 'Labels', subCategory);
+imdsMaster = imageDatastore(location, 'Labels', categorical(masterCategory));
+imdsSub = imageDatastore(location, 'Labels', categorical(subCategory));
+save('imds.mat','imdsMaster','imdsSub');
 
 % Per vedere la distribuzione
 % T = countEachLabel(imdsMaster)
 
-cv = cvpartition(masterCategory, 'KFold', 3);
+cvMaster = cvpartition(masterCategory, 'KFold', 3);
+cvSub = cvpartition(subCategory, 'KFold', 3);
+save('cvpartitions.mat','cvMaster','cvSub');
 
 % Semplice split
 

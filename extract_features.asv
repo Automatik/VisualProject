@@ -1,0 +1,11 @@
+load('cvpartitions.mat','cvMaster');
+load('imds.mat','imdsMaster');
+
+net = alexnet;
+sz = net.Layers(1).InputSize;
+layer = 'fc7'; % layer da cui estrarre le features
+
+% Resize images
+imdsMaster = augmentedImageDatastore(sz, imdsMaster, 'ColorPreprocessing','rgb2gr);
+
+features = activations(net, imdsMaster, layer, 'OutputAs', 'rows');
