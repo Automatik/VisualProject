@@ -1,5 +1,11 @@
 imagesIds = loadstyles();
 
+missing_images = find_missing_images(imagesIds);
+[~, idxs] = ismember(missing_images, imagesIds);
+imagesIds(idxs.',:) = []; % remove missing images
+
+imagesIds = remove_gray_images(imagesIds);
+
 % Semplice split
 
 numImages = size(imagesIds,1);

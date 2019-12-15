@@ -1,5 +1,11 @@
 imagesIds = loadstyles();
 
+missing_images = find_missing_images(imagesIds);
+[~, idxs] = ismember(missing_images, imagesIds);
+imagesIds(id
+
+% Semplice split
+
 numImages = size(imagesIds,1);
 valSize = 0.25;
 
@@ -9,4 +15,4 @@ valIndexes = setdiff(1:numImages,trainIndexes);
 trainIds = imagesIds(trainIndexes);
 valIds = imagesIds(valIndexes);
 
-save('train_val_ids.mat','trainIds','val
+save('train_val_ids.mat','trainIds','valIds');
