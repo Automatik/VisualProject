@@ -4,7 +4,9 @@ missing_images = find_missing_images(imagesIds);
 [~, idxs] = ismember(missing_images, imagesIds);
 imagesIds(idxs.',:) = []; % remove missing images
 
-imagesIds = remove_gray_images(imagesIds);
+% gray_images = find_gray_images(imagesIds);
+%[~, gray_indexes] = ismember(gray_images,imagesIds);
+%imagesIds(gray_indexes.',:) = [];
 
 % Semplice split
 

@@ -1,4 +1,4 @@
-function newImagesIds = remove_gray_images(imagesIds)
+function gray_images = find_gray_images(imagesIds)
 
     if exist('gray_images.mat','file') ~= 2
         gray_images = zeros(431,1);
@@ -13,9 +13,7 @@ function newImagesIds = remove_gray_images(imagesIds)
             end
         end
         save('gray_images.mat','gray_images');
+    else
+        load('gray_images.mat','gray_images');
     end
-    load('gray_images.mat','gray_images');
-    [~, gray_indexes] = ismember(gray_images,imagesIds);
-    newImagesIds = imagesIds;
-    newImagesIds(gray_indexes.',:) = [];
 end
