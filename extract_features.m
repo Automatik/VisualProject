@@ -10,3 +10,11 @@ layer = 'fc7'; % layer da cui estrarre le features
 imdsMaster = augmentedImageDatastore(sz, imdsMaster, 'ColorPreprocessing','gray2rgb');
 
 features = activations(net, imdsMaster, layer, 'OutputAs', 'rows');
+
+% normFeatures = features ./ norm(features);
+
+% [imds1, imds2] = splitEachLabel(imdsMaster, 0.25);
+% T = table(normFeatures, imds1.Labels);
+% train model
+
+
