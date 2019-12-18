@@ -118,10 +118,31 @@ location = cellstr(strcat('../images/',num2str(imagesIds),'.jpg'));
 location = strrep(location,' ',''); %remove spaces
 imdsMaster = imageDatastore(location, 'Labels', categorical(masterCategory));
 imdsSub = imageDatastore(location, 'Labels', categorical(subCategory));
-save('imds.mat','imdsMaster','imdsSub');
+imdsArticle = imageDatastore(location, 'Labels', categorical(articleType));
+save('imds.mat','imdsMaster','imdsSub','imdsArticle');
 
 % Per vedere la distribuzione
 % T = countEachLabel(imdsMaster)
+
+% Splittare per ArticleType e successivamente replicare lo split
+% per MasterCategory e SubCategory
+[imdsArticleTypeTrain, imdsArticleTypeTest] = splitEachLabel(imdsArticle, 0.75);
+
+imagesIdsTrain = extract_id(imdsArticleTypeTrain.Files);
+imagesIdsTest = extract_id(imdsArticleTypeTest.Files);
+
+imdsMasterTrain = assign_labels(imdsArticleTypeTrain, imdsMaster);
+imdsMasterTest = assign_labels(imdsArticleTypeTest, imdsMaster);
+
+imdsSubTrain = assign_labels(imdsArticleTypeTrain, imdsSub);
+imdsSubTest = assign_labels(imdsArticleTypeTest, imdsSub);
+
+save('imdsTrainTest.mat','imdsArticleTypeTrain','imdsArticleTypeTest',...
+    'imdsMasterTrain','imdsMasterTest','imdsSubTrain','imdsSubTest', ...
+    'imagesIdsTrain','imagesIdsTest');
+
+create_new_images(imagesIdsTrain, cellstr(imdsMasterTrain.Labels), ...
+    cellstr(imdsSubTrain.Labels), cellstr(imdsArticleTypeTrain.Labels));
 
 % cvMaster = cvpartition(masterCategory, 'KFold', 3);
 % cvSub = cvpartition(subCategory, 'KFold', 3);
