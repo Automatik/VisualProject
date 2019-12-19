@@ -146,6 +146,14 @@ save('imdsOriginalTrainTest.mat','imdsArticleTypeTrain','imdsArticleTypeTest',..
 create_new_images(imagesIdsTrain, cellstr(imdsMasterTrain.Labels), ...
     cellstr(imdsSubTrain.Labels), cellstr(imdsArticleTypeTrain.Labels));
 
+%% Undersample delle immagini delle classi di maggioranza
+
+indexesToDelete = undersample_random(cellstr(imdsArticleTypeTrain.Labels));
+imagesIds(indexesToDelete,:) = [];
+masterCategory(indexesToDelete,:) = [];
+subCategory(indexesToDelete,:) = [];
+articleType(indexesToDelete,:) = [];
+
 load('newImagesLabels.mat','newImagesIds','newMasterCategory','newSubCategory','newArticleType');
 
 newImagesLocation = cellstr(strcat('../newImages/',num2str(cell2mat(newImagesIds)),'.jpg'));
