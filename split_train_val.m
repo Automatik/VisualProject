@@ -1,3 +1,5 @@
+%% Load Labels
+fprintf("Loading labels...\n");
 [imagesIds, ~, masterCategory, subCategory, articleType] = loadstyles();
 
 missing_images = find_missing_images(imagesIds);
@@ -113,7 +115,8 @@ masterCategory(pos,:) = [];
 subCategory(pos,:) = [];
 articleType(pos,:) = [];
 
-% Create ImageDatastore
+%%  Create ImageDatastore
+fprintf("Creating temporary image datastores...\n");
 location = cellstr(strcat('../images/',num2str(imagesIds),'.jpg'));
 location = strrep(location,' ',''); %remove spaces
 imdsMaster = imageDatastore(location, 'Labels', categorical(masterCategory));
@@ -126,42 +129,62 @@ save('imds.mat','imdsMaster','imdsSub','imdsArticle');
 
 %% Splittare per ArticleType e successivamente replicare lo split
 % per MasterCategory e SubCategory
-[imdsArticleTypeTrain, imdsArticleTypeTest] = splitEachLabel(imdsArticle, 0.75);
 
-imagesIdsTrain = extract_id(imdsArticleTypeTrain.Files);
-imagesIdsTest = extract_id(imdsArticleTypeTest.Files);
+if exist('imdsOriginalTrainTest.mat','file') ~= 2
+    fprintf("Splitting images in training and testing sets...\n");
+    [imdsArticleTypeTrain, imdsArticleTypeTest] = splitEachLabel(imdsArticle, 0.75);
 
-imdsMasterTrain = assign_labels(imdsArticleTypeTrain, imdsMaster);
-imdsMasterTest = assign_labels(imdsArticleTypeTest, imdsMaster);
+    imagesIdsTrain = extract_id(imdsArticleTypeTrain.Files);
+    imagesIdsTest = extract_id(imdsArticleTypeTest.Files);
 
-imdsSubTrain = assign_labels(imdsArticleTypeTrain, imdsSub);
-imdsSubTest = assign_labels(imdsArticleTypeTest, imdsSub);
+    imdsMasterTrain = assign_labels(imdsArticleTypeTrain, imdsMaster);
+    imdsMasterTest = assign_labels(imdsArticleTypeTest, imdsMaster);
 
-save('imdsOriginalTrainTest.mat','imdsArticleTypeTrain','imdsArticleTypeTest',...
-    'imdsMasterTrain','imdsMasterTest','imdsSubTrain','imdsSubTest', ...
-    'imagesIdsTrain','imagesIdsTest');
+    imdsSubTrain = assign_labels(imdsArticleTypeTrain, imdsSub);
+    imdsSubTest = assign_labels(imdsArticleTypeTest, imdsSub);
+
+    save('imdsOriginalTrainTest.mat','imdsArticleTypeTrain','imdsArticleTypeTest',...
+        'imdsMasterTrain','imdsMasterTest','imdsSubTrain','imdsSubTest', ...
+        'imagesIdsTrain','imagesIdsTest');
+else
+    fprintf("Loading training and testing sets...\n");
+    load('imdsOriginalTrainTest.mat','imdsArticleTypeTrain','imdsArticleTypeTest',...
+        'imdsMasterTrain','imdsMasterTest','imdsSubTrain','imdsSubTest', ...
+        'imagesIdsTrain','imagesIdsTest');
+end
 
 %% Crea immagini sintetiche SOLO dal training set
 
-create_new_images(imagesIdsTrain, cellstr(imdsMasterTrain.Labels), ...
-    cellstr(imdsSubTrain.Labels), cellstr(imdsArticleTypeTrain.Labels));
+if exist('../newImages','dir') ~= 7
+    % Se la cartella con le nuove immagini non esiste
+    fprintf("Creating new images...\n");
+    create_new_images(imagesIdsTrain, cellstr(imdsMasterTrain.Labels), ...
+        cellstr(imdsSubTrain.Labels), cellstr(imdsArticleTypeTrain.Labels));
+end
 
 %% Undersample delle immagini delle classi di maggioranza
-
+fprintf("Undersampling big classes...\n");
 indexesToDelete = undersample_random(cellstr(imdsArticleTypeTrain.Labels));
-imagesIds(indexesToDelete,:) = [];
-masterCategory(indexesToDelete,:) = [];
-subCategory(indexesToDelete,:) = [];
-articleType(indexesToDelete,:) = [];
+imagesIdsTrain(indexesToDelete,:) = [];
+imdsMasterTrain.Files(indexesToDelete,:) = [];
+%imdsMasterTrain.Labels(indexesToDelete,:) = [];
+imdsSubTrain.Files(indexesToDelete,:) = [];
+%imdsSubTrain.Labels(indexesToDelete,:) = [];
+imdsArticleTypeTrain.Files(indexesToDelete,:) = [];
+%imdsArticleTypeTrain.Labels(indexesToDelete,:) = [];
 
+%% Create final training set
+fprintf("Creating final training set...\n");
 load('newImagesLabels.mat','newImagesIds','newMasterCategory','newSubCategory','newArticleType');
 
+trainImagesLocation = cellstr(strcat('../images/',num2str(imagesIdsTrain),'.jpg'));
+trainImagesLocation = strrep(trainImagesLocation,' ','');
 newImagesLocation = cellstr(strcat('../newImages/',num2str(cell2mat(newImagesIds)),'.jpg'));
 newImagesLocation = strrep(newImagesLocation,' ','');
-location = [location; newImagesLocation];
-masterCategory = [masterCategory; newMasterCategory];
-subCategory = [subCategory; newSubCategory];
-articleType = [articleType; newArticleType];
+location = [trainImagesLocation; newImagesLocation];
+masterCategory = [imdsMasterTrain.Labels; newMasterCategory];
+subCategory = [imdsSubTrain.Labels; newSubCategory];
+articleType = [imdsArticleTypeTrain.Labels; newArticleType];
 
 imdsMaster = imageDatastore(location, 'Labels', categorical(masterCategory));
 imdsSub = imageDatastore(location, 'Labels', categorical(subCategory));
