@@ -1,10 +1,13 @@
-load('imds.mat', 'imdsMaster','imdsSub');
+load('imdsForTrain.mat', 'imdsMaster','imdsSub', 'imdsArticle');
+load('imdsOriginalTrainTest.mat','imdsArticleTypeTest','imdsMasterTest','imdsSubTest');
 
 net = alexnet;
 sz = net.Layers(1).InputSize;
 layer = 'fc7'; % layer da cui estrarre le features
 
-[trainSub, testSub] = splitEachLabel(imdsSub, 0.75);
+%[trainSub, testSub] = splitEachLabel(imdsSub, 0.75);
+trainSub = imdsSub;
+testSub = imdsSubTest;
 
 trainAugSub = augmentedImageDatastore(sz, trainSub, 'ColorPreprocessing','gray2rgb');
 testAugSub = augmentedImageDatastore(sz, testSub, 'ColorPreprocessing','gray2rgb');
