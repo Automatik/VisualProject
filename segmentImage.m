@@ -48,6 +48,7 @@ function segmentedImage = segmentImage(image)
 %     rectangle('Position',bb,'EdgeColor','r');
 
         segmentedImage = imcrop(im,bb);
+        %TODO fare resize a 80x60
     else
         segmentedImage = image;
     end
