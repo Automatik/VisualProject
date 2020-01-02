@@ -1,5 +1,5 @@
 load('cvpartitions.mat','cvMaster');
-load('imds.mat','imdsMaster');
+load('imdsOriginalTrainTest.mat','imdsMasterTrain','imdsMasterTest');
 
 net = alexnet;
 sz = net.Layers(1).InputSize;
