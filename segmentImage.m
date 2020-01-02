@@ -19,66 +19,43 @@ function segmentedImage = segmentImage(image)
     max_area = T_area * size(gray,1) * size(gray,2);
     
     % rimozione rumore / artefatti
-%     F = fspecial('gaussian', 15, 1.5);
-%     filtered = imfilter(gray,F);
-    
     filtered = imgaussfilt(gray,1.5, 'FilterSize',7);
     
+    % Valutazione colore dello sfondo guardando la parte centrale
+    % dell'immagine
     x = floor((1 - T_center) * size(filtered,2));
     y = floor((1 - T_center) * size(filtered,1));
     width = floor(T_center * size(filtered,2));
     height = floor(T_center * size(filtered,1));
     rect = [x y width-x height-y];
     imageCenter = imcrop(filtered,rect);
-%     T = adaptthresh(imageCenter,0.5);
-%     bin = imbinarize(imageCenter,T);
-
-%     fprintf("Mean Bin: %.2f\n",mean2(imageCenter));
     
-    if mean2(imageCenter) > 0.55 %0.4 %0.6
+    if mean2(imageCenter) > 0.55 
         hasWhiteBackground = true;
     else
         hasWhiteBackground = false;
     end
 
+    kernel = strel('diamond',7);
     
     if hasWhiteBackground
         T = adaptthresh(filtered,0.65);
         bin = imbinarize(filtered,T);
-        kernel = strel('diamond',7);
         bin2 = imclose(bin,kernel);
         bw3 = bwareaopen(bin2,500);
         compl = ~bw3;
     else
         T = adaptthresh(filtered,0.6);
         bin = imbinarize(filtered,T);
-        kernel = strel('diamond',7);
         bin2 = imerode(bin,kernel);
         bw3 = bwareaopen(bin2,500);
         compl = bw3;
     end
-    
-    %bw = filtered > 0.7; %altrimenti usare adaptthresh
-%     filtered = adapthisteq(filtered);
-%     T = adaptthresh(filtered, 0.55);
-%     bw = imbinarize(filtered,T);
-%     segmentedImage = bw;
-%     bw2 = imclose(bw, strel('disk',7,4));
-%     bw3 = bwareaopen(bw2,1000);
-%     
-    % lo schermo del monitor è necessario rimanga in primo piano,
-    % altrimenti sbaglia a capire il colore del background
-%     if hasWhiteBackground
-%         compl = bw3;
-%     else
-%         compl = ~bw3;
-%     end
-%     imshow(compl);
-    %compl = imclearborder(compl); % oppure prendere elemento più centrale
-
+         
+    % Cerchiamo la componente connessa che può essere l'oggetto
     stats = regionprops(compl,'BoundingBox','Centroid','Extent','Solidity','Extrema','FilledArea');
     bbox = cell2mat({stats.BoundingBox}.');
-    [sortedBbox, index] = sortrows(bbox,[3 4],'descend');
+    [~, index] = sortrows(bbox,[3 4],'descend');
     sortedStats = stats(index);
     if hasWhiteBackground
         [acceptedBbox, index2] = discardBboxes(sortedStats, max_area, center, max_distance);
@@ -89,12 +66,11 @@ function segmentedImage = segmentImage(image)
     %figure,imshow(compl); for ii = 1:size(sortedBbox,1) rectangle('Position', sortedBbox(ii,:),'EdgeColor','r'); text(sortedBbox(ii,1),sortedBbox(ii,2),num2str(ii), 'Color','g'); end
     if size(acceptedBbox,1) > 0
         bb = acceptedBbox(1,:);
-        fprintf("Solidity: %.2f Extent: %.2f\n",sortedStats(1).Solidity,sortedStats(1).Extent);
 %     figure,imshow(compl),hold on;
 %     rectangle('Position',bb,'EdgeColor','r');
-        segmentedImage = imcrop(compl,bb);
-%         cropped = imcrop(im,bb);
-%         segmentedImage = imresize(imgaussfilt3(cropped,1.5),[80 60]);
+%         segmentedImage = imcrop(compl,bb);
+        cropped = imcrop(im,bb);
+        segmentedImage = imresize(imgaussfilt3(cropped,1.5),[80 60]);
     else
         segmentedImage = [];
     end
@@ -102,11 +78,14 @@ end
 
 function [acceptedBbox, idx] = discardBboxes(stats, max_area, center, max_distance)
     bbox = cell2mat({stats.BoundingBox}.');
-    T_solidity = 0.5;
+    T_solidity1 = 0.5;
+    T_solidity2 = 0.7;
     T_extent = 0.45;
     minRatio = 0.5;
     maxRatio = 2.1;
-    idx = [];
+    maxRatio2 = 2.51;
+    tempIdx = zeros(size(bbox,1),1);
+    jj = 1;
     for ii = 1:size(bbox,1)
         centroid = stats(ii).Centroid;
         centerX = centroid(1);
@@ -119,25 +98,27 @@ function [acceptedBbox, idx] = discardBboxes(stats, max_area, center, max_distan
         distanceY = abs(center(2) - centerY);
         solidity = stats(ii).Solidity;
         extent = stats(ii).Extent;
-        if (ratio < minRatio || ratio > maxRatio) && (ratio > 2.51 || solidity < 0.7)
-            idx = [idx; ii];
+        if (ratio < minRatio || ratio > maxRatio) && (ratio > maxRatio2 || solidity < T_solidity2)
+            tempIdx(jj) = ii;
+            jj = jj + 1;
         else
             if area >= max_area
-                idx = [idx; ii];
+                tempIdx(jj) = ii;
+                jj = jj + 1;
             else
                 if distanceX > max_distance(1) || distanceY > max_distance(2)
-                    idx = [idx; ii];
+                    tempIdx(jj) = ii;
+                    jj = jj + 1;
                 else
-                    if solidity < T_solidity || extent < T_extent
-                        idx = [idx; ii];
+                    if solidity < T_solidity1 || extent < T_extent
+                        tempIdx(jj) = ii;
+                        jj = jj + 1;
                     end
                 end
             end
         end
-%         if ratio < minRatio || ratio > maxRatio || area >= max_area || distanceX > max_distance(1) || distanceY > max_distance(2) || solidity < T_solidity || extent < T_extent
-%             idx = [idx; ii];
-%         end
     end
+    idx = tempIdx(1:jj);
     acceptedBbox = bbox;
     acceptedBbox(idx,:) = [];
 end
@@ -147,13 +128,13 @@ function [acceptedBbox, idx] = discardBboxesBlack(stats, max_area, center, max_d
     minRatio = 0.5;
     maxRatio = 1.6;
     T_diff = 150;
-    idx = [];
+    T_extent = 0.8;
+    tempIdx = zeros(size(bbox,1),1);
+    jj = 1;
     for ii = 1:size(bbox,1)
         centroid = stats(ii).Centroid;
         centerX = centroid(1);
         centerY = centroid(2);
-        x = bbox(ii,1);
-        y = bbox(ii,2);
         width = bbox(ii,3);
         height = bbox(ii,4);
         ratio = width / height;
@@ -167,28 +148,31 @@ function [acceptedBbox, idx] = discardBboxesBlack(stats, max_area, center, max_d
         BL = extrema(7,:);
         myextent = stats(ii).FilledArea / area;
         if (ratio < minRatio || ratio > maxRatio)
-            idx = [idx; ii];
+            tempIdx(jj) = ii;
+            jj = jj + 1;
         else
             if area >= max_area
-                idx = [idx; ii];
+                tempIdx(jj) = ii;
+                jj = jj + 1;
             else    
                 if distanceX > max_distance(1) || distanceY > max_distance(2)
-                    idx = [idx; ii];
+                    tempIdx(jj) = ii;
+                    jj = jj + 1;
                 else
                     if abs(pdist2(TL,TR) - pdist2(BL,BR)) > T_diff || abs(pdist2(TL,BL) - pdist2(TR,BR)) > T_diff 
-                        idx = [idx; ii];
+                        tempIdx(jj) = ii;
+                        jj = jj + 1;
                     else
-                        if myextent < 0.8
-                            idx = [idx; ii];
+                        if myextent < T_extent
+                            tempIdx(jj) = ii;
+                            jj = jj + 1;
                         end
-%                         if pdist2(TL,bbCorner1) > T_corners || pdist2(TR,bbCorner2) > T_corners || pdist2(BR,bbCorner3) > T_corners || pdist2(BL,bbCorner4) > T_corners
-%                             idx = [idx; ii];
-%                         end
                     end
                 end
             end
         end
     end
+    idx = tempIdx(1:jj);
     acceptedBbox = bbox;
     acceptedBbox(idx,:) = [];
 end
