@@ -5,12 +5,6 @@ function getSimilarItems(imagePath)
     segmentedImage = segmentImage(image);
     toc
     if ~isempty(segmentedImage)
-%         load('imdsOriginalTrainTest.mat','imdsMasterTrain', ...
-%         'imdsSubTrain', 'imdsArticleTypeTrain', 'imagesIdsTrain');
-%         load('hogFeatures.mat','trainHogFeatures');
-%         load('svmMasterHog.mat','svmMasterHog');
-        %load('svmSubHog.mat', 'svmSubHog');
-        %load('svmArticleHog.mat', 'svmArticleHog');
         
         hog = double(extractHOGFeatures(segmentedImage,'CellSize',[8 8],'BlockSize',[2 2]));
         features = hog ./ norm(hog);

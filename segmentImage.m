@@ -118,7 +118,7 @@ function [acceptedBbox, idx] = discardBboxes(stats, max_area, center, max_distan
             end
         end
     end
-    idx = tempIdx(1:jj);
+    idx = tempIdx(1:(jj-1));
     acceptedBbox = bbox;
     acceptedBbox(idx,:) = [];
 end
@@ -172,7 +172,7 @@ function [acceptedBbox, idx] = discardBboxesBlack(stats, max_area, center, max_d
             end
         end
     end
-    idx = tempIdx(1:jj);
+    idx = tempIdx(1:(jj-1));
     acceptedBbox = bbox;
     acceptedBbox(idx,:) = [];
 end
