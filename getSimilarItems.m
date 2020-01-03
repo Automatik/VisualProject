@@ -1,4 +1,4 @@
-function getSimilarItems(imagePath, svmArticleHog, trainHogFeatures, imagesIdsTrain, imdsArticleTypeTrain)
+function getSimilarItems(imagePath)
     K = 10; % Similar items to retrieve
     image = imread(imagePath);
     tic
