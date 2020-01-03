@@ -1,4 +1,8 @@
-function getSimilarItems(imagePath, svmArticleHog, trainHogFeatures, imagesIdsTrain, imdsArticleTypeTrain)
+function getSimilarItems(imagePath)
+    global svmArticleHog;
+    global trainHogFeatures;
+    global imagesIdsTrain;
+    global imdsArticleTypeTrain;
     K = 10; % Similar items to retrieve
     image = imread(imagePath);
     tic
@@ -11,6 +15,7 @@ function getSimilarItems(imagePath, svmArticleHog, trainHogFeatures, imagesIdsTr
         
 %         pred = predict(svmArticleHog.ClassificationSVM, features);
         pred = predict(svmArticleHog, features);
+%         [pred, ~, PBScore, Posterior] = predict(svmArticleHog, features);
         disp(string(pred));
         pos = find(strcmp(cellstr(imdsArticleTypeTrain.Labels),string(pred)));
         trainHogFeatures = trainHogFeatures(pos,:);
