@@ -1,13 +1,13 @@
 function segmentedImage = segmentImage(image)
     
-    image = colorConstancy(image,'white patch');
+    im = colorConstancy(image,'white patch');
 
-    im = im2double(image);
+    im2 = im2double(im);
     
     if size(image,3) == 3
-        gray = rgb2gray(im);
+        gray = rgb2gray(im2);
     else
-        gray = im;
+        gray = im2;
     end
 
     T_distance = 0.25; %Threshold distance from center
@@ -54,25 +54,35 @@ function segmentedImage = segmentImage(image)
          
     % Cerchiamo la componente connessa che può essere l'oggetto
     stats = regionprops(compl,'BoundingBox','Centroid','Extent','Solidity','Extrema','FilledArea');
-    bbox = cell2mat({stats.BoundingBox}.');
-    [~, index] = sortrows(bbox,[3 4],'descend');
-    sortedStats = stats(index);
-    if hasWhiteBackground
-        [acceptedBbox, index2] = discardBboxes(sortedStats, max_area, center, max_distance);
+    if isempty(stats)
+        w1 = size(gray,1);
+        w2 = size(gray,2);
+        if (w1 == 80 && w2 == 60) || (w1 == 60 && w2 == 80) || (w1 == 1800 && w2 == 2400) || (w1 == 2400 && w2 == 1800)
+            segmentedImage = image;
+        else
+            segmentedImage = [];
+        end
     else
-        [acceptedBbox, index2] = discardBboxesBlack(sortedStats, max_area, center, max_distance);
-    end
-    sortedStats(index2,:) = [];
-    %figure,imshow(compl); for ii = 1:size(sortedBbox,1) rectangle('Position', sortedBbox(ii,:),'EdgeColor','r'); text(sortedBbox(ii,1),sortedBbox(ii,2),num2str(ii), 'Color','g'); end
-    if size(acceptedBbox,1) > 0
-        bb = acceptedBbox(1,:);
-%     figure,imshow(compl),hold on;
-%     rectangle('Position',bb,'EdgeColor','r');
-%         segmentedImage = imcrop(compl,bb);
-        cropped = imcrop(im,bb);
-        segmentedImage = imresize(imgaussfilt3(cropped,1.5),[80 60]);
-    else
-        segmentedImage = [];
+        bbox = cell2mat({stats.BoundingBox}.');
+        [~, index] = sortrows(bbox,[3 4],'descend');
+        sortedStats = stats(index);
+        if hasWhiteBackground
+            [acceptedBbox, index2] = discardBboxes(sortedStats, max_area, center, max_distance);
+        else
+            [acceptedBbox, index2] = discardBboxesBlack(sortedStats, max_area, center, max_distance);
+        end
+        sortedStats(index2,:) = [];
+        %figure,imshow(compl); for ii = 1:size(sortedBbox,1) rectangle('Position', sortedBbox(ii,:),'EdgeColor','r'); text(sortedBbox(ii,1),sortedBbox(ii,2),num2str(ii), 'Color','g'); end
+        if size(acceptedBbox,1) > 0
+            bb = acceptedBbox(1,:);
+            %     figure,imshow(compl),hold on;
+            %     rectangle('Position',bb,'EdgeColor','r');
+            %         segmentedImage = imcrop(compl,bb);
+            cropped = imcrop(im,bb);
+            segmentedImage = imresize(imgaussfilt3(cropped,1.5),[80 60]);
+        else
+            segmentedImage = [];
+        end
     end
 end
 
@@ -159,15 +169,15 @@ function [acceptedBbox, idx] = discardBboxesBlack(stats, max_area, center, max_d
                     tempIdx(jj) = ii;
                     jj = jj + 1;
                 else
-                    if abs(pdist2(TL,TR) - pdist2(BL,BR)) > T_diff || abs(pdist2(TL,BL) - pdist2(TR,BR)) > T_diff 
+%                     if abs(pdist2(TL,TR) - pdist2(BL,BR)) > T_diff || abs(pdist2(TL,BL) - pdist2(TR,BR)) > T_diff 
+%                         tempIdx(jj) = ii;
+%                         jj = jj + 1;
+%                     else
+                    if myextent < T_extent
                         tempIdx(jj) = ii;
                         jj = jj + 1;
-                    else
-                        if myextent < T_extent
-                            tempIdx(jj) = ii;
-                            jj = jj + 1;
-                        end
                     end
+%                     end
                 end
             end
         end

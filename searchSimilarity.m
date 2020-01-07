@@ -1,8 +1,8 @@
 %% Estrarre features dal dataset originale (solo train ?)
 
-% load('imdsOriginalTrainTest.mat','imdsArticleTypeTrain','imdsArticleTypeTest',...
-%         'imdsMasterTrain','imdsMasterTest','imdsSubTrain','imdsSubTest', ...
-%         'imagesIdsTrain','imagesIdsTest');
+load('imdsOriginalTrainTest.mat','imdsArticleTypeTrain','imdsArticleTypeTest',...
+        'imdsMasterTrain','imdsMasterTest','imdsSubTrain','imdsSubTest', ...
+        'imagesIdsTrain','imagesIdsTest');
 
 trainImds = imdsMasterTrain;
 trainIds = imagesIdsTrain;
@@ -29,14 +29,14 @@ testSize = 10; % size(testHogFeatures,1);
 
 trainAug = augmentedImageDatastore([80 60], trainImds, 'ColorPreprocessing','rgb2gray');
 testAug = augmentedImageDatastore([80 60], testImds, 'ColorPreprocessing','rgb2gray');
-% normTrainHogFeatures = trainHogFeatures ./ norm(trainHogFeatures);
-% normTestHogFeatures = testHogFeatures ./ norm(testHogFeatures);
-% normTrainRgbFeatures = trainRgbFeatures ./ norm(trainRgbFeatures);
-% normTestRgbFeatures = testRgbFeatures ./ norm(testRgbFeatures);
+normTrainHogFeatures = trainHogFeatures ./ norm(trainHogFeatures);
+normTestHogFeatures = testHogFeatures ./ norm(testHogFeatures);
+normTrainRgbFeatures = trainRgbFeatures ./ norm(trainRgbFeatures);
+normTestRgbFeatures = testRgbFeatures ./ norm(testRgbFeatures);
 % normTrainFeatures = [normTrainHogFeatures normTrainRgbFeatures] ./ norm([normTrainHogFeatures normTrainRgbFeatures]);
 % normTestFeatures = [normTestHogFeatures normTestRgbFeatures] ./ norm([normTestHogFeatures normTestRgbFeatures]);
-normTrainFeatures = trainHogFeatures ./ norm(trainHogFeatures);
-normTestFeatures = testHogFeatures ./ norm(testHogFeatures);
+% normTrainFeatures = trainHogFeatures ./ norm(trainHogFeatures);
+% normTestFeatures = testHogFeatures ./ norm(testHogFeatures);
 %load('svmMasterHog.mat');
 %pred = predict(svmMasterHog.ClassificationSVM, normTestFeatures);
 
@@ -44,7 +44,7 @@ results = zeros(testSize, K);
 euclideanScores = zeros(testSize,1);
 pearsonScores = zeros(testSize,1);
 for ii = 1:testSize
-    features = normTestFeatures(ii,:);
+%     features = normTestFeatures(ii,:);
     %label = cellstr(pred(ii));
     
     % calculate euclidean similarity metric
@@ -56,10 +56,22 @@ for ii = 1:testSize
 %     D = pdist2(normTrainFeatures,features,'cosine');
 
     % correlation metric
-    D = pdist2(normTrainFeatures, features, 'correlation');
+%     D = pdist2(normTrainFeatures, features, 'correlation');
 
     % spearman
 %     D = pdist2(trainHogFeatures,features,'spearman');
+    
+    hogFeatures = normTestHogFeatures(ii,:);
+    rgbFeatures = normTestRgbFeatures(ii,:);
+    D1 = pdist2(normTrainHogFeatures, hogFeatures, 'cosine');
+    D2 = pdist2(normTrainRgbFeatures, rgbFeatures, 'cosine');
+    
+    normD1 = D1 / mean(D1,'omitnan');
+    normD2 = D2 / mean(D2,'omitnan');
+%     normD1 = (D1 - min(D1)) ./ (max(D1) - min(D1));
+%     normD2 = (D2 - min(D2)) ./ (max(D2) - min(D2));
+    
+    D = 0.6 * normD1 + 0.4 * normD2;
     
     [dists, idx] = mink(D, K);
     
