@@ -6,11 +6,11 @@
 % segmentImage(im2);
 % segmentImage(im3);
 
-% im = imread('testImages/test3.jpg');
+% im = imread('testImages/test11.jpg');
 % s = segmentImage(im);
 
-testdir = 'testImages';
-destdir = 'testSegment';
+testdir = 'testImages3';
+destdir = 'testSegment3';
 files = dir(testdir);
 if exist(destdir,'dir') ~= 7
     mkdir(destdir);
