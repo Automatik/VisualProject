@@ -24,6 +24,9 @@ normTestFeatures = testFeatures ./ norm(testFeatures);
 normTrainFeatures = gpuArray(normTrainFeatures);
 % normTestFeatures = gpuArray(normTestFeatures);
 
+t = templateSVM('KernelFunction','polynomial','Standardize',true);
+svmArticleCubic = fitcecoc(normTrainFeatures,imdsArticle.Labels,'Learners',t,'Coding','onevsone','FitPosterior',true,'KFold',3,'Options',statset('UseParallel',true));
+
 svm = fitcecoc(normTrainFeatures, trainSub.Labels);
 save('svmSub.mat','svm');
 
